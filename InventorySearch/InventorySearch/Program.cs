@@ -1,6 +1,7 @@
 using InventorySearch.Client.Pages;
 using InventorySearch.Components;
 using InventorySearch.Data;
+using InventorySearch.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace InventorySearch
@@ -15,9 +16,18 @@ namespace InventorySearch
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents()
                 .AddInteractiveWebAssemblyComponents();
+            
             // Register dbcontext (user secrets for development purposes)
             builder.Services.AddDbContext<AppDbContext>(options => 
                 options.UseNpgsql(builder.Configuration.GetConnectionString("InventoryDb")));
+
+            // Register HttpClient for model downloads
+            builder.Services.AddHttpClient();
+
+            // Register ONNX model service with configuration
+            builder.Services.Configure<OnnxModelOptions>(
+                builder.Configuration.GetSection(OnnxModelOptions.SectionName));
+            builder.Services.AddSingleton<IOnnxModelService, OnnxModelService>();
 
             var app = builder.Build();
 

@@ -2,8 +2,9 @@
 @using Pgvector
 @using Microsoft.ML.OnnxRuntime
 @using Microsoft.ML.OnnxRuntime.Tensors
+@using InventorySearch.Services
 @inject AppDbContext Db
-@inject InferenceSession OnnxSession
+@inject IOnnxModelService OnnxModelService
 
 <PageTitle>Inventory Image Upload</PageTitle>
 
@@ -117,6 +118,9 @@
 
     private async Task<Vector> GenerateEmbeddingAsync(byte[] imageBytes)
     {
+        // Get the ONNX session (will download model if needed)
+        var session = await OnnxModelService.GetSessionAsync();
+        
         // Placeholder – we'll implement real CLIP inference next
         var dummy = new float[512];
         dummy[0] = 1.0f;
