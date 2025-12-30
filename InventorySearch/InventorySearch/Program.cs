@@ -1,5 +1,7 @@
 using InventorySearch.Client.Pages;
 using InventorySearch.Components;
+using InventorySearch.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace InventorySearch
 {
@@ -13,6 +15,9 @@ namespace InventorySearch
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents()
                 .AddInteractiveWebAssemblyComponents();
+            // Register dbcontext (user secrets for development purposes)
+            builder.Services.AddDbContext<AppDbContext>(options => 
+                options.UseNpgsql(builder.Configuration.GetConnectionString("InventoryDb")));
 
             var app = builder.Build();
 
