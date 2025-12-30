@@ -17,5 +17,5 @@ public class OnnxModelOptions
     /// <summary>
     /// If true, automatically download the model if it doesn't exist
     /// </summary>
-    public bool AutoDownload { get; set; } = true;
+    public bool AutoDownload { get; set; } = false; //don't want to download. Let it fail
 }

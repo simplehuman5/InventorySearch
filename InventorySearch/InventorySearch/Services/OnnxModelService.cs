@@ -72,6 +72,7 @@ public class OnnxModelService : IOnnxModelService, IDisposable
             _logger.LogInformation("ONNX model found at {ModelPath}", modelPath);
             return;
         }
+        _logger.LogError("ONNX model NOT found at {ModelPath}", modelPath);
 
         if (!_options.AutoDownload)
         {
