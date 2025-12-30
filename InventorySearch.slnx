@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="InventorySearch/InventorySearch.Client/InventorySearch.Client.csproj" />
+  <Project Path="InventorySearch/InventorySearch/InventorySearch.csproj" />
+</Solution>

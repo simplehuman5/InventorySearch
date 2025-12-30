@@ -1,0 +1,28 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.tmp
+*.temp
+
+# Build outputs
+bin/
+obj/
+
+# User secrets
+**/secrets.json
+
+# Logs
+*.log
+
+# NuGet
+packages/
+*.nupkg
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
