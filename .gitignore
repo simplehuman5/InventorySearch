@@ -26,3 +26,6 @@ packages/
 # OS
 .DS_Store
 Thumbs.db
+
+# ML Models
+*.onnx

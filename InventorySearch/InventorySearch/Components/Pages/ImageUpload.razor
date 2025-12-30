@@ -1,0 +1,134 @@
+﻿@page "/upload"
+@using Pgvector
+@using Microsoft.ML.OnnxRuntime
+@using Microsoft.ML.OnnxRuntime.Tensors
+@using InventorySearch.Services
+@inject AppDbContext Db
+@inject IOnnxModelService OnnxModelService
+
+<PageTitle>Inventory Image Upload</PageTitle>
+
+<h3>Upload Image (Max 5 MB)</h3>
+
+<EditForm Model="uploadModel" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Image Name (required, unique):</label>
+        <InputText @bind-Value="uploadModel.Name" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Select Image:</label>
+        <InputFile OnChange="OnFileSelected" accept="image/*" class="form-control" />
+        @if (!string.IsNullOrEmpty(fileError))
+        {
+            <div class="text-danger">@fileError</div>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(statusMessage))
+    {
+        <div class="alert @(isError ? "alert-danger" : "alert-success")">
+            @statusMessage
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary" disabled="@isProcessing">Upload</button>
+</EditForm>
+
+@code {
+    private UploadModel uploadModel = new();
+    private IBrowserFile? selectedFile;
+    private string? fileError;
+    private string? statusMessage;
+    private bool isError;
+    private bool isProcessing;
+
+    private const long MaxFileSize = 5 * 1024 * 1024; // 5 MB
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        fileError = null;
+
+        if (selectedFile.Size > MaxFileSize)
+        {
+            fileError = "File exceeds 5 MB limit.";
+            selectedFile = null;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (selectedFile == null || string.IsNullOrWhiteSpace(uploadModel.Name))
+            return;
+
+        isProcessing = true;
+        statusMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            await using var memoryStream = new MemoryStream();
+            await selectedFile.OpenReadStream(MaxFileSize).CopyToAsync(memoryStream);
+            var imageBytes = memoryStream.ToArray();
+
+            var embedding = await GenerateEmbeddingAsync(imageBytes);
+
+            // Exact duplicate check
+            bool isDuplicate = await Db.Images.AnyAsync(i => i.Embedding == embedding);
+
+            if (isDuplicate)
+            {
+                statusMessage = "duplicate entry found";
+                isError = true;
+            }
+            else
+            {
+                var item = new Image
+                {
+                    Name = uploadModel.Name.Trim(),
+                    Embedding = embedding,
+                    Filename = selectedFile.Name
+                };
+
+                Db.Images.Add(item);
+                await Db.SaveChangesAsync();
+
+                statusMessage = $"Success! '{uploadModel.Name}' stored with ID {item.Id}.";
+                isError = false;
+
+                uploadModel = new();
+                selectedFile = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error: {ex.Message}";
+            isError = true;
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task<Vector> GenerateEmbeddingAsync(byte[] imageBytes)
+    {
+        // Get the ONNX session (will download model if needed)
+        var session = await OnnxModelService.GetSessionAsync();
+        
+        // Placeholder – we'll implement real CLIP inference next
+        var dummy = new float[512];
+        dummy[0] = 1.0f;
+        return new Vector(dummy);
+    }
+
+    public class UploadModel
+    {
+        public string Name { get; set; } = string.Empty;
+    }
+}
