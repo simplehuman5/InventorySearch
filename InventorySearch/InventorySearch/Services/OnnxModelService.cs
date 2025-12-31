@@ -1,7 +1,16 @@
+using InventorySearch.Data;
 using Microsoft.Extensions.Options;
 using Microsoft.ML.OnnxRuntime;
 
 namespace InventorySearch.Services;
+
+/*
+    1. Constructor with DI dependencies
+    2. Thread-safe lazy loading with SemaphoreSlim
+    3. Model existence checking and downloading
+    4. Proper disposal of InferenceSession
+*/
+
 
 public interface IOnnxModelService
 {
@@ -18,7 +27,7 @@ public interface IOnnxModelService
 
 public class OnnxModelService : IOnnxModelService, IDisposable
 {
-    private readonly OnnxModelOptions _options;
+    private readonly OnnxModelOption _options;
     private readonly IWebHostEnvironment _environment;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<OnnxModelService> _logger;
@@ -27,7 +36,7 @@ public class OnnxModelService : IOnnxModelService, IDisposable
     private bool _disposed;
 
     public OnnxModelService(
-        IOptions<OnnxModelOptions> options,
+        IOptions<OnnxModelOption> options,
         IWebHostEnvironment environment,
         IHttpClientFactory httpClientFactory,
         ILogger<OnnxModelService> logger)
@@ -71,11 +80,11 @@ public class OnnxModelService : IOnnxModelService, IDisposable
         {
             _logger.LogInformation("ONNX model found at {ModelPath}", modelPath);
             return;
-        }
-        _logger.LogError("ONNX model NOT found at {ModelPath}", modelPath);
+        }        
 
         if (!_options.AutoDownload)
         {
+            _logger.LogError("ONNX model NOT found at {ModelPath}", modelPath);
             throw new FileNotFoundException(
                 $"ONNX model not found at '{modelPath}' and AutoDownload is disabled. " +
                 $"Please download the model manually or enable AutoDownload in configuration.",
