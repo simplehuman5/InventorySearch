@@ -1,7 +1,7 @@
 # Inventory Search
 
-A Blazor app that lets you upload images and find similar ones using AI (CLIP embeddings + PostgreSQL pgvector).
-More to come
+A Blazor app that lets you upload images and find similar ones using AI (CLIP embeddings + PostgreSQL pgvector). Comparison is done by checking cosine similarity.
+<br/>More to come
 
 ## What it does
 
