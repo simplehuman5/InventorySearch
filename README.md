@@ -26,11 +26,11 @@ CREATE DATABASE inventory;
 CREATE EXTENSION vector;
 
 CREATE TABLE images (
-    Id SERIAL PRIMARY KEY,
-    Name VARCHAR(255) NOT NULL UNIQUE,
-    Embedding vector(512) NOT NULL,
-    Filename VARCHAR(255),
-    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    embedding vector(512) NOT NULL,
+    filename VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 

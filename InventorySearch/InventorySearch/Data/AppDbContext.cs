@@ -18,11 +18,26 @@ namespace InventorySearch.Data
             modelBuilder.Entity<Image>(entity =>
             {
                 entity.ToTable("images");
+                
                 entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id)
+                    .HasColumnName("id");
+                
+                entity.Property(e => e.Name)
+                    .HasColumnName("name")
+                    .IsRequired()
+                    .HasMaxLength(255);
                 entity.HasIndex(e => e.Name).IsUnique();
-                entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
-                entity.Property(e => e.Embedding)                    
-                    .HasColumnType("vector(512)");  // No conversion needed with UseVector()
+                
+                entity.Property(e => e.Embedding)
+                    .HasColumnName("embedding")
+                    .HasColumnType("vector(512)");
+                
+                entity.Property(e => e.Filename)
+                    .HasColumnName("filename");
+                
+                entity.Property(e => e.CreatedAt)
+                    .HasColumnName("created_at");
             });
         }
     }
