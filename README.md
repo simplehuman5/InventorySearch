@@ -44,7 +44,8 @@ dotnet user-secrets set "ConnectionStrings:InventoryDb" "Host=localhost;Port=543
 ### 3. Get the ONNX model
 
 Either:
-- Download manually from [Hugging Face](https://huggingface.co/openai/clip-vit-base-patch32/tree/main/onnx) and put it in `wwwroot/models/`
+- Download manually from [Hugging Face](https://huggingface.co/Xenova/clip-vit-base-patch32/blob/main/onnx/model_q4f16.onnx) by Xenova and put it in `wwwroot/models/`
+- Note this is quantized version which means compressed. For full version, recommended to export the full version using hugging face optimum
 - Or set `"AutoDownload": true` in `appsettings.json`
 
 ### 4. Run it
