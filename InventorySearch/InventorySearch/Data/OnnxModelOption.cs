@@ -1,7 +1,8 @@
-namespace InventorySearch.Services;
+namespace InventorySearch.Data;
 
-public class OnnxModelOptions
+public class OnnxModelOption
 {
+    //section name in appsettings.json
     public const string SectionName = "OnnxModel";
     
     /// <summary>

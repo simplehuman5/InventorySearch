@@ -17,16 +17,18 @@ namespace InventorySearch
                 .AddInteractiveServerComponents()
                 .AddInteractiveWebAssemblyComponents();
             
-            // Register dbcontext (user secrets for development purposes)
+            // Register dbcontext with pgvector support
             builder.Services.AddDbContext<AppDbContext>(options => 
-                options.UseNpgsql(builder.Configuration.GetConnectionString("InventoryDb")));
+                options.UseNpgsql(
+                    builder.Configuration.GetConnectionString("InventoryDb"),
+                    o => o.UseVector()));  // Enable pgvector support
 
             // Register HttpClient for model downloads
             builder.Services.AddHttpClient();
 
             // Register ONNX model service with configuration
-            builder.Services.Configure<OnnxModelOptions>(
-                builder.Configuration.GetSection(OnnxModelOptions.SectionName));
+            builder.Services.Configure<OnnxModelOption>(
+                builder.Configuration.GetSection(OnnxModelOption.SectionName));
             builder.Services.AddSingleton<IOnnxModelService, OnnxModelService>();
 
             var app = builder.Build();

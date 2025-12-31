@@ -1,16 +1,19 @@
 ﻿@page "/upload"
 @using Pgvector
+@using Pgvector.EntityFrameworkCore
 @using Microsoft.ML.OnnxRuntime
 @using Microsoft.ML.OnnxRuntime.Tensors
 @using InventorySearch.Services
+@using System.ComponentModel.DataAnnotations
 @inject AppDbContext Db
 @inject IOnnxModelService OnnxModelService
+@rendermode InteractiveServer // Enables server-side Blazor with interactive features (make it global in routes.razor)
 
 <PageTitle>Inventory Image Upload</PageTitle>
 
 <h3>Upload Image (Max 5 MB)</h3>
 
-<EditForm Model="uploadModel" OnValidSubmit="HandleSubmit">
+<EditForm Model="uploadModel" OnValidSubmit="HandleSubmit" FormName="uploadForm">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
@@ -38,6 +41,15 @@
     <button type="submit" class="btn btn-primary" disabled="@isProcessing">Upload</button>
 </EditForm>
 
+<!-- Debug output -->
+<div class="mt-3 p-2 bg-light">
+    <strong>Debug Info:</strong><br/>
+    Selected file: @(selectedFile?.Name ?? "null")<br/>
+    File size: @(selectedFile?.Size ?? 0) bytes<br/>
+    Name: "@uploadModel.Name"<br/>
+    Is processing: @isProcessing
+</div>
+
 @code {
     private UploadModel uploadModel = new();
     private IBrowserFile? selectedFile;
@@ -47,6 +59,7 @@
     private bool isProcessing;
 
     private const long MaxFileSize = 5 * 1024 * 1024; // 5 MB
+    private const double SimilarityThreshold = 0.05;  // Cosine distance threshold for duplicates
 
     private async Task OnFileSelected(InputFileChangeEventArgs e)
     {
@@ -77,12 +90,14 @@
 
             var embedding = await GenerateEmbeddingAsync(imageBytes);
 
-            // Exact duplicate check
-            bool isDuplicate = await Db.Images.AnyAsync(i => i.Embedding == embedding);
+            // Check for near-duplicate using cosine distance
+            // CosineDistance returns 0 for identical vectors, 2 for opposite vectors
+            bool isDuplicate = await Db.Images
+                .AnyAsync(i => i.Embedding.CosineDistance(embedding) < SimilarityThreshold);
 
             if (isDuplicate)
             {
-                statusMessage = "duplicate entry found";
+                statusMessage = "A similar image already exists in the database.";
                 isError = true;
             }
             else
@@ -129,6 +144,7 @@
 
     public class UploadModel
     {
+        [Required(ErrorMessage = "Image name is required")]
         public string Name { get; set; } = string.Empty;
     }
 }
