@@ -1,8 +1,8 @@
 using InventorySearch.Client.Pages;
 using InventorySearch.Components;
 using InventorySearch.Data;
-using InventorySearch.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.ML.OnnxRuntime;
 
 namespace InventorySearch
 {
@@ -25,11 +25,28 @@ namespace InventorySearch
 
             // Register HttpClient for model downloads
             builder.Services.AddHttpClient();
-
-            // Register ONNX model service with configuration
-            builder.Services.Configure<OnnxModelOption>(
-                builder.Configuration.GetSection(OnnxModelOption.SectionName));
-            builder.Services.AddSingleton<IOnnxModelService, OnnxModelService>();
+            
+            var modelPath = Path.Combine(builder.Environment.WebRootPath,
+                builder.Configuration.GetSection("OnnxModel")["ModelPath"] ?? "models/clip.onnx");
+            if (!File.Exists(modelPath))
+            {
+                throw new FileNotFoundException("ONNX CLIP model not found. Place it in wwwroot/models/", modelPath);
+            }
+            var session = new InferenceSession(modelPath);
+            
+            // Log input/output names for debugging
+            Console.WriteLine("ONNX Model Inputs:");
+            foreach (var input in session.InputMetadata)
+            {
+                Console.WriteLine($"  - Name: {input.Key}, Shape: [{string.Join(", ", input.Value.Dimensions)}], Type: {input.Value.ElementType}");
+            }
+            Console.WriteLine("ONNX Model Outputs:");
+            foreach (var output in session.OutputMetadata)
+            {
+                Console.WriteLine($"  - Name: {output.Key}, Shape: [{string.Join(", ", output.Value.Dimensions)}], Type: {output.Value.ElementType}");
+            }
+            
+            builder.Services.AddSingleton(session);
 
             var app = builder.Build();
 

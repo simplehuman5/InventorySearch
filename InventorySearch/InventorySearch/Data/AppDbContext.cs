@@ -5,7 +5,7 @@ namespace InventorySearch.Data
 {
     public class AppDbContext : DbContext
     {
-        public DbSet<Image> Images => Set<Image>();
+        public DbSet<ImageObject> Images => Set<ImageObject>();
         
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
@@ -15,7 +15,7 @@ namespace InventorySearch.Data
         {
             modelBuilder.HasPostgresExtension("vector");  // Ensure pgvector extension
 
-            modelBuilder.Entity<Image>(entity =>
+            modelBuilder.Entity<ImageObject>(entity =>
             {
                 entity.ToTable("images");
                 
