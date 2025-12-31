@@ -168,9 +168,10 @@
             }
         });
 
+        var inputName = OnnxSession.InputMetadata.Keys.First();
         var inputs = new List<NamedOnnxValue>
         {
-            NamedOnnxValue.CreateFromTensor("input", tensor)
+            NamedOnnxValue.CreateFromTensor(inputName,tensor)
         };
 
         using IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results = OnnxSession.Run(inputs);
