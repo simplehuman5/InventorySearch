@@ -9,12 +9,16 @@ A Blazor app that lets you upload images and find similar ones using AI (CLIP em
 - Find duplicate/similar images using cosine similarity
 - Store everything in PostgreSQL with vector search
 
-## Tech used
+## Tech stack
 
 - .NET 10 / Blazor
 - Entity Framework Core
 - PostgreSQL + pgvector + npgsql
 - ONNX Runtime (CLIP model - 512)
+- More to come
+
+## To do (what's left)
+- Unit tests
 - More to come
 
 ## Getting started
