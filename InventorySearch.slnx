@@ -4,5 +4,6 @@
     <File Path="README.md" />
   </Folder>
   <Project Path="InventorySearch/InventorySearch.Client/InventorySearch.Client.csproj" />
+  <Project Path="InventorySearch/InventorySearch.Tests/InventorySearch.Tests.csproj" />
   <Project Path="InventorySearch/InventorySearch/InventorySearch.csproj" />
 </Solution>

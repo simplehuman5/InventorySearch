@@ -1,6 +1,7 @@
 using InventorySearch.Client.Pages;
 using InventorySearch.Components;
 using InventorySearch.Data;
+using InventorySearch.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.ML.OnnxRuntime;
 
@@ -47,6 +48,9 @@ namespace InventorySearch
             }
             
             builder.Services.AddSingleton(session);
+
+            // Register application services
+            builder.Services.AddScoped<IImageUploadService, ImageUploadService>();
 
             var app = builder.Build();
 
