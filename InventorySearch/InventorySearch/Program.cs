@@ -51,6 +51,8 @@ namespace InventorySearch
 
             // Register application services
             builder.Services.AddScoped<IImageUploadService, ImageUploadService>();
+            builder.Services.AddScoped<IImageRepository, ImageRepository>();
+            builder.Services.AddSingleton<IEmbeddingGenerator, OnnxEmbeddingGenerator>();
 
             var app = builder.Build();
 

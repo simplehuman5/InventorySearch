@@ -1,7 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.ML.OnnxRuntime;
 using InventorySearch.Services;
 using InventorySearch.Data;
 using Pgvector;
@@ -12,23 +10,33 @@ namespace InventorySearch.Tests.Services;
 [TestClass]
 public class ImageUploadServiceTests
 {
-    private TestAppDbContext _testDb = null!;
-    private Mock<InferenceSession> _mockOnnxSession = null!;
+    private Mock<IImageRepository> _mockImageRepository = null!;
+    private Mock<IEmbeddingGenerator> _mockEmbeddingGenerator = null!;
     private ImageUploadService _sut = null!;
 
     [TestInitialize]
     public void TestInitialize()
     {
-        _testDb = new TestAppDbContext();
-        // Create a mock InferenceSession - we'll mock the methods we need
-        _mockOnnxSession = new Mock<InferenceSession>();
-        _sut = new ImageUploadService(_testDb, _mockOnnxSession.Object);
+        _mockImageRepository = new Mock<IImageRepository>();
+        _mockEmbeddingGenerator = new Mock<IEmbeddingGenerator>();
+        _sut = new ImageUploadService(_mockImageRepository.Object, _mockEmbeddingGenerator.Object);
     }
 
-    [TestCleanup]
-    public void TestCleanup()
+    [TestMethod]
+    public async Task GenerateEmbeddingAsync_ValidImageBytes_ReturnsVector()
     {
-        _testDb.Dispose();
+        // Arrange
+        var imageBytes = new byte[] { 0x89, 0x50, 0x4E, 0x47 }; // Minimal PNG header
+        var expectedEmbedding = new Vector(new float[512]);
+        _mockEmbeddingGenerator.Setup(x => x.GenerateEmbeddingAsync(imageBytes))
+            .ReturnsAsync(expectedEmbedding);
+
+        // Act
+        var result = await _sut.GenerateEmbeddingAsync(imageBytes);
+
+        // Assert
+        Assert.AreEqual(expectedEmbedding, result);
+        _mockEmbeddingGenerator.Verify(x => x.GenerateEmbeddingAsync(imageBytes), Times.Once);
     }
 
     [TestMethod]
@@ -36,14 +44,14 @@ public class ImageUploadServiceTests
     {
         // Arrange
         var embedding = new Vector(new float[512]);
-        await _testDb.Images.AddAsync(new ImageObject { Name = "Existing", Embedding = embedding });
-        await _testDb.SaveChangesAsync();
+        _mockImageRepository.Setup(x => x.IsDuplicateAsync(embedding, 0.05)).ReturnsAsync(true);
 
         // Act
         var result = await _sut.IsDuplicateAsync(embedding);
 
         // Assert
         Assert.IsTrue(result);
+        _mockImageRepository.Verify(x => x.IsDuplicateAsync(embedding, 0.05), Times.Once);
     }
 
     [TestMethod]
@@ -51,12 +59,14 @@ public class ImageUploadServiceTests
     {
         // Arrange
         var embedding = new Vector(new float[512]);
+        _mockImageRepository.Setup(x => x.IsDuplicateAsync(embedding, 0.05)).ReturnsAsync(false);
 
         // Act
         var result = await _sut.IsDuplicateAsync(embedding);
 
         // Assert
         Assert.IsFalse(result);
+        _mockImageRepository.Verify(x => x.IsDuplicateAsync(embedding, 0.05), Times.Once);
     }
 
     [TestMethod]
@@ -65,12 +75,14 @@ public class ImageUploadServiceTests
         // Arrange
         var embedding = new Vector(new float[512]);
         var customThreshold = 0.1;
+        _mockImageRepository.Setup(x => x.IsDuplicateAsync(embedding, customThreshold)).ReturnsAsync(false);
 
         // Act
         var result = await _sut.IsDuplicateAsync(embedding, customThreshold);
 
         // Assert
         Assert.IsFalse(result);
+        _mockImageRepository.Verify(x => x.IsDuplicateAsync(embedding, customThreshold), Times.Once);
     }
 
     [TestMethod]
@@ -83,13 +95,14 @@ public class ImageUploadServiceTests
             Embedding = new Vector(new float[512]),
             Filename = "test.jpg"
         };
+        _mockImageRepository.Setup(x => x.SaveAsync(image)).ReturnsAsync(image);
 
         // Act
         var result = await _sut.SaveImageAsync(image);
 
         // Assert
         Assert.AreEqual(image, result);
-        Assert.AreEqual(1, result.Id); // Should have been assigned an ID
+        _mockImageRepository.Verify(x => x.SaveAsync(image), Times.Once);
     }
 
     [TestMethod]
@@ -101,10 +114,8 @@ public class ImageUploadServiceTests
             Name = "Test",
             Embedding = new Vector(new float[512])
         };
-        
-        // Simulate database error by disposing context
-        _testDb.Dispose();
-        
+        _mockImageRepository.Setup(x => x.SaveAsync(image)).ThrowsAsync(new Exception("Database error"));
+
         // Act & Assert
         try
         {
@@ -115,14 +126,5 @@ public class ImageUploadServiceTests
         {
             // Expected exception
         }
-    }
-}
-
-public class TestAppDbContext : AppDbContext
-{
-    public TestAppDbContext() : base(new DbContextOptionsBuilder<AppDbContext>()
-        .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-        .Options)
-    {
     }
 }
